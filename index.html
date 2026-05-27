@@ -455,6 +455,8 @@ function sendMsg(){
   rec.chat[chatTab].push({sender,side:sender,text,time});
   document.getElementById('chatInput').value='';
   renderChat();
+  // Refresh table row so preview updates immediately
+  if(editSheet==='malm')r1();else r2();
   saveDB();
 }
 
