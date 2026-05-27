@@ -130,7 +130,7 @@ tr:hover td{background:#fffbf0}
     <table><thead><tr>
       <th style="width:30px"></th><th style="width:88px">תאריך</th><th>תחום / משימה</th>
       <th style="width:36px">עד'</th><th style="width:90px">סטטוס</th>
-      <th style="width:70px">DHL</th><th style="width:70px">אחראי</th><th>הערות מלמ / DHL</th>
+      <th style="width:70px">DHL</th><th style="width:70px">אחראי</th><th>💬 הערות</th>
     </tr></thead><tbody id="b1"><tr><td colspan="8" class="loading">טוען נתונים...</td></tr></tbody></table>
   </div>
 </div>
@@ -152,7 +152,7 @@ tr:hover td{background:#fffbf0}
       <th style="width:30px"></th><th>נושא</th><th style="width:80px">מבקש</th>
       <th style="width:88px">תאריך</th><th>בקשה / כותרת</th>
       <th style="width:70px">מטפל</th><th style="width:36px">עד'</th>
-      <th style="width:90px">סטטוס</th><th>הערות מלמ / DHL</th>
+      <th style="width:90px">סטטוס</th><th>💬 הערות</th>
     </tr></thead><tbody id="b2"><tr><td colspan="9" class="loading">טוען נתונים...</td></tr></tbody></table>
   </div>
 </div>
@@ -368,9 +368,9 @@ function g(id){const el=document.getElementById(id);return el?el.value.trim():''
 function saveModal(){
   let rec;
   if(editSheet==='malm'){
-    rec={ת:g('f_ת'),ד:g('f_ד'),מ:g('f_מ'),ע:g('f_ע'),ס:g('f_ס')||'פתוח',dhl:g('f_dhl'),א:g('f_א'),ה:g('f_ה')};
+    rec={ת:g('f_ת'),ד:g('f_ד'),מ:g('f_מ'),ע:g('f_ע'),ס:g('f_ס')||'פתוח',dhl:g('f_dhl'),א:g('f_א'),ה:r&&r.ה||''};
   }else{
-    rec={נ:g('f_נ'),מב:g('f_מב'),ת:g('f_ת'),כ:g('f_כ'),ב:g('f_ב'),מט:g('f_מט'),ע:g('f_ע'),ס:g('f_ס')||'פתוח',ה:g('f_ה')};
+    rec={נ:g('f_נ'),מב:g('f_מב'),ת:g('f_ת'),כ:g('f_כ'),ב:g('f_ב'),מט:g('f_מט'),ע:g('f_ע'),ס:g('f_ס')||'פתוח',ה:r&&r.ה||''};
   }
   if(editIdx===-1){DB[editSheet].unshift(rec);}
   else{DB[editSheet][editIdx]=rec;}
