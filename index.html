@@ -60,6 +60,27 @@ tr:hover td{background:#fffbf0}
 .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #f0f0f0}
 .dtag{font-size:10px;background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;display:inline-block;margin-bottom:2px}
 .loading{text-align:center;padding:40px;color:#999;font-size:14px}
+
+/* Chat */
+.chat-section{margin-top:20px;border-top:2px solid #FECC02;padding-top:16px}
+.chat-tabs{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid #e0e0e0}
+.chat-tab{padding:7px 16px;cursor:pointer;font-size:12px;font-weight:600;color:#666;border-bottom:2px solid transparent}
+.chat-tab.active{color:#D40511;border-bottom-color:#D40511}
+.chat-messages{height:200px;overflow-y:auto;border:1px solid #e8e8e8;border-radius:8px;padding:10px;background:#f9f9f9;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:75%;padding:8px 12px;border-radius:10px;font-size:12px;line-height:1.5}
+.msg-malm{background:#e3f2fd;color:#1a1a2e;align-self:flex-end;border-bottom-left-radius:2px}
+.msg-dhl{background:#fff3e0;color:#1a1a2e;align-self:flex-start;border-bottom-right-radius:2px}
+.msg-time{font-size:10px;color:#999;margin-top:3px}
+.msg-sender{font-size:10px;font-weight:700;margin-bottom:2px}
+.msg-malm .msg-sender{color:#1565c0}
+.msg-dhl .msg-sender{color:#e65100}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end}
+.chat-input-row textarea{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:12px;font-family:Arial;direction:rtl;resize:none;height:60px}
+.chat-send-col{display:flex;flex-direction:column;gap:6px}
+.chat-sender-sel{padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:11px;font-family:Arial}
+.btn-send{background:#D40511;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial;white-space:nowrap}
+.btn-send:hover{background:#b0040e}
+.no-msgs{color:#bbb;font-size:12px;text-align:center;padding:20px}
 </style>
 </head>
 <body>
@@ -127,6 +148,24 @@ tr:hover td{background:#fffbf0}
     <div class="form-actions">
       <button class="btn btn-cancel" onclick="closeModal()">ביטול</button>
       <button class="btn btn-save" onclick="saveModal()">💾 שמור</button>
+    </div>
+    <!-- Chat -->
+    <div class="chat-section" id="chatSection" style="display:none">
+      <div class="chat-tabs">
+        <div class="chat-tab active" onclick="switchChatTab('malm')">💬 הערות מלמ</div>
+        <div class="chat-tab" onclick="switchChatTab('dhl')">💬 הערות DHL</div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-row">
+        <textarea id="chatInput" placeholder="כתוב הערה..."></textarea>
+        <div class="chat-send-col">
+          <select class="chat-sender-sel" id="chatSender">
+            <option value="מלמ">מלמ</option>
+            <option value="DHL">DHL</option>
+          </select>
+          <button class="btn-send" onclick="sendMsg()">שלח ↵</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -279,6 +318,7 @@ function openAdd(){
   editIdx=-1;editSheet=currentTab===0?'malm':'rivka';
   document.getElementById('modalTitle').textContent=currentTab===0?'✏️ משימה חדשה — מלמ כולל':'✏️ משימה חדשה — רבקה';
   document.getElementById('modalFields').innerHTML=currentTab===0?malmFields():rivkaFields();
+  document.getElementById('chatSection').style.display='none';
   document.getElementById('modalBg').classList.add('open');
 }
 
@@ -287,6 +327,10 @@ function openEdit(sheet,idx){
   const r=DB[sheet][idx];
   document.getElementById('modalTitle').textContent='✏️ עריכת משימה';
   document.getElementById('modalFields').innerHTML=sheet==='malm'?malmFields(r):rivkaFields(r);
+  document.getElementById('chatSection').style.display='block';
+  chatTab='malm';
+  document.querySelectorAll('.chat-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  renderChat();
   document.getElementById('modalBg').classList.add('open');
 }
 
@@ -310,6 +354,52 @@ function saveModal(){
 }
 
 loadDB();
+
+// Chat
+let chatTab='malm';
+
+function switchChatTab(tab){
+  chatTab=tab;
+  document.querySelectorAll('.chat-tab').forEach((t,i)=>t.classList.toggle('active',(tab==='malm'&&i===0)||(tab==='dhl'&&i===1)));
+  renderChat();
+}
+
+function renderChat(){
+  if(editIdx===-1)return;
+  const rec=DB[editSheet][editIdx];
+  const msgs=(rec.chat||{})[chatTab]||[];
+  const el=document.getElementById('chatMessages');
+  if(!msgs.length){el.innerHTML='<div class="no-msgs">אין הערות עדיין</div>';return}
+  el.innerHTML=msgs.map(m=>`
+    <div class="msg msg-${m.side==='מלמ'?'malm':'dhl'}">
+      <div class="msg-sender">${m.sender}</div>
+      <div>${m.text}</div>
+      <div class="msg-time">${m.time}</div>
+    </div>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+function sendMsg(){
+  const text=document.getElementById('chatInput').value.trim();
+  const sender=document.getElementById('chatSender').value;
+  if(!text||editIdx===-1)return;
+  const rec=DB[editSheet][editIdx];
+  if(!rec.chat)rec.chat={malm:[],dhl:[]};
+  if(!rec.chat[chatTab])rec.chat[chatTab]=[];
+  const now=new Date();
+  const time=now.toLocaleDateString('he-IL')+' '+now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+  rec.chat[chatTab].push({sender,side:sender,text,time});
+  document.getElementById('chatInput').value='';
+  renderChat();
+  saveDB();
+}
+
+// Allow Enter to send (Shift+Enter for newline)
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey&&document.activeElement.id==='chatInput'){
+    e.preventDefault();sendMsg();
+  }
+});
 </script>
 </body>
 </html>
