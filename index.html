@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>דוח משימות מלמ פוקוס</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f4f6f9;color:#1a1a2e;direction:rtl;font-size:13px}
+.header{background:#FECC02;padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:3px solid #D40511}
+.logo{font-size:20px;font-weight:700;color:#D40511;letter-spacing:1px}
+.subtitle{font-size:13px;color:#333;flex:1}
+.btn{padding:7px 14px;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:Arial}
+.btn-add{background:#D40511;color:#fff}
+.btn-add:hover{background:#b0040e}
+.btn-save{background:#2e7d32;color:#fff}
+.btn-cancel{background:#757575;color:#fff}
+.tabs{display:flex;background:#fff;border-bottom:2px solid #FECC02;padding:0 20px}
+.tab{padding:10px 18px;cursor:pointer;font-size:13px;font-weight:600;color:#666;border-bottom:3px solid transparent;white-space:nowrap}
+.tab:hover{color:#1a1a2e;background:#fffbf0}
+.tab.active{color:#D40511;border-bottom-color:#D40511}
+.pane{display:none;padding:14px 20px}
+.pane.active{display:block}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.stat{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:8px 14px;text-align:center;min-width:80px}
+.stat .n{font-size:20px;font-weight:700}
+.stat .l{font-size:11px;color:#777}
+.n-open{color:#D40511}.n-done{color:#2e7d32}.n-frozen{color:#e65100}.n-cancel{color:#999}.n-wait{color:#3949ab}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.filters input,.filters select{padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Arial}
+.filters input{min-width:200px}
+.count{font-size:12px;color:#888;margin-bottom:8px}
+.tbl-wrap{overflow-x:auto;background:#fff;border-radius:8px;border:1px solid #e8e8e8}
+table{width:100%;border-collapse:collapse}
+th{background:#1a1a2e;color:#fff;padding:9px 10px;text-align:right;font-size:12px;white-space:nowrap;font-weight:600}
+td{padding:7px 10px;border-bottom:1px solid #f2f2f2;vertical-align:top;font-size:12px}
+tr:hover td{background:#fffbf0}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.s-פתוח{background:#fde8e8;color:#c62828}
+.s-בבדיקה{background:#e3f2fd;color:#1565c0}
+.s-מוקפא{background:#fff3e0;color:#e65100}
+.s-הושהה{background:#f3e5f5;color:#6a1b9a}
+.s-בוצע{background:#e8f5e9;color:#2e7d32}
+.s-טופל{background:#e8f5e9;color:#1b5e20}
+.s-בוטל{background:#f5f5f5;color:#9e9e9e}
+.s-ממתין-לבדיקה{background:#e8eaf6;color:#3949ab}
+.muted{color:#ccc}
+.nores{text-align:center;padding:30px;color:#aaa}
+.act-btn{background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:4px;font-size:14px}
+.act-btn:hover{background:#f0f0f0}
+.saving{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;display:none}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;width:90%;max-width:540px;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:15px;margin-bottom:16px;color:#1a1a2e;border-bottom:2px solid #FECC02;padding-bottom:8px}
+.form-row{margin-bottom:11px}
+.form-row label{display:block;font-size:11px;color:#666;margin-bottom:3px;font-weight:700}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;font-family:Arial;direction:rtl}
+.form-row textarea{height:75px;resize:vertical}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #f0f0f0}
+.dtag{font-size:10px;background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;display:inline-block;margin-bottom:2px}
+.loading{text-align:center;padding:40px;color:#999;font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">DHL Express</div>
+  <div class="subtitle">דוח משימות מלמ פוקוס</div>
+  <button class="btn btn-add" id="btnAdd" onclick="openAdd()">+ משימה חדשה</button>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">משימות מלמ כולל</div>
+  <div class="tab" onclick="switchTab(1)">משימות לרבקה</div>
+</div>
+
+<div class="pane active" id="pane0">
+  <div class="stats" id="s1"></div>
+  <div class="filters">
+    <input type="text" id="q1" placeholder="חיפוש חופשי..." oninput="r1()">
+    <select id="st1" onchange="r1()"><option value="">כל הסטטוסים</option></select>
+    <select id="dm1" onchange="r1()"><option value="">כל התחומים</option></select>
+    <select id="pr1" onchange="r1()">
+      <option value="">כל העדיפויות</option>
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+      <option value="4">4</option><option value="5">5</option>
+    </select>
+  </div>
+  <div class="count" id="c1"></div>
+  <div class="tbl-wrap">
+    <table><thead><tr>
+      <th style="width:30px"></th><th style="width:88px">תאריך</th><th>תחום / משימה</th>
+      <th style="width:36px">עד'</th><th style="width:90px">סטטוס</th>
+      <th style="width:70px">DHL</th><th style="width:70px">אחראי</th><th>הערות</th>
+    </tr></thead><tbody id="b1"><tr><td colspan="8" class="loading">טוען נתונים...</td></tr></tbody></table>
+  </div>
+</div>
+
+<div class="pane" id="pane1">
+  <div class="stats" id="s2"></div>
+  <div class="filters">
+    <input type="text" id="q2" placeholder="חיפוש חופשי..." oninput="r2()">
+    <select id="st2" onchange="r2()"><option value="">כל הסטטוסים</option></select>
+    <select id="ns2" onchange="r2()"><option value="">כל הנושאים</option></select>
+  </div>
+  <div class="count" id="c2"></div>
+  <div class="tbl-wrap">
+    <table><thead><tr>
+      <th style="width:30px"></th><th>נושא</th><th style="width:80px">מבקש</th>
+      <th style="width:88px">תאריך</th><th>בקשה / כותרת</th>
+      <th style="width:70px">מטפל</th><th style="width:36px">עד'</th>
+      <th style="width:90px">סטטוס</th><th>הערות</th>
+    </tr></thead><tbody id="b2"><tr><td colspan="9" class="loading">טוען נתונים...</td></tr></tbody></table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">משימה חדשה</h3>
+    <div id="modalFields"></div>
+    <div class="form-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-save" onclick="saveModal()">💾 שמור</button>
+    </div>
+  </div>
+</div>
+
+<div class="saving" id="savingMsg">⏳ שומר ב-GitHub...</div>
+
+<script src="config.js"></script>
+<script>
+const OWNER=window.APP_CONFIG.owner,REPO=window.APP_CONFIG.repo,TOKEN=window.APP_CONFIG.token;
+let DB={malm:[],rivka:[]},dbSha='',currentTab=0,editIdx=-1,editSheet='';
+const SM=['פתוח','בבדיקה','ממתין לבדיקה','מוקפא','הושהה','בוצע','טופל','בוטל'];
+const SR=['פתוח','בוצע'];
+
+async function loadDB(){
+  const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/db.json`,
+    {headers:{Authorization:`token ${TOKEN}`,Accept:'application/vnd.github.v3+json'}});
+  const j=await r.json();
+  dbSha=j.sha;
+  DB=JSON.parse(atob(j.content.replace(/\n/g,'')));
+  initFilters();r1();r2();
+}
+
+async function saveDB(){
+  const el=document.getElementById('savingMsg');
+  el.style.display='block';
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(DB,null,2))));
+  const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/db.json`,{
+    method:'PUT',
+    headers:{Authorization:`token ${TOKEN}`,'Content-Type':'application/json',Accept:'application/vnd.github.v3+json'},
+    body:JSON.stringify({message:'Update tasks',content,sha:dbSha})
+  });
+  const j=await r.json();
+  dbSha=j.content.sha;
+  el.style.display='none';
+}
+
+function switchTab(i){
+  currentTab=i;
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.pane').forEach((p,j)=>p.classList.toggle('active',i===j));
+  document.getElementById('btnAdd').textContent=i===0?'+ משימה חדשה (מלמ)':'+ משימה חדשה (רבקה)';
+}
+
+function sc(s){const k=(s||'פתוח').replace(/ /g,'-');return`<span class="badge s-${k}">${s||'פתוח'}</span>`}
+function pc(p){if(!p)return'<span class="muted">—</span>';let n=Number(p);let bg=n<=1?'#fde8e8':n<=3?'#fff3e0':n<=5?'#fff9c4':'#e8f5e9';let co=n<=1?'#c62828':n<=3?'#e65100':n<=5?'#f57f17':'#2e7d32';return`<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:700;background:${bg};color:${co}">${p}</span>`}
+function m(v){return v||'<span class="muted">—</span>'}
+
+function buildStats(data,el){
+  const cnt={};data.forEach(r=>{cnt[r.ס]=(cnt[r.ס]||0)+1});
+  el.innerHTML=`
+    <div class="stat"><div class="n">${data.length}</div><div class="l">סה"כ</div></div>
+    <div class="stat"><div class="n n-open">${(cnt['פתוח']||0)+(cnt['בבדיקה']||0)}</div><div class="l">פתוחות</div></div>
+    <div class="stat"><div class="n n-done">${(cnt['בוצע']||0)+(cnt['טופל']||0)}</div><div class="l">הושלמו</div></div>
+    <div class="stat"><div class="n n-frozen">${(cnt['מוקפא']||0)+(cnt['הושהה']||0)}</div><div class="l">מוקפא</div></div>
+    <div class="stat"><div class="n n-wait">${cnt['ממתין לבדיקה']||0}</div><div class="l">ממתין לבדיקה</div></div>
+    <div class="stat"><div class="n n-cancel">${cnt['בוטל']||0}</div><div class="l">בוטל</div></div>`;
+}
+
+function populateSel(id,vals){
+  const s=document.getElementById(id);const f=s.options[0];s.innerHTML='';s.appendChild(f);
+  [...new Set(vals)].filter(Boolean).sort().forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;s.appendChild(o)});
+}
+
+function initFilters(){
+  populateSel('st1',DB.malm.map(r=>r.ס));
+  populateSel('dm1',DB.malm.map(r=>r.ד));
+  populateSel('st2',DB.rivka.map(r=>r.ס));
+  populateSel('ns2',DB.rivka.map(r=>r.נ));
+}
+
+function r1(){
+  const q=document.getElementById('q1').value.toLowerCase();
+  const st=document.getElementById('st1').value;
+  const dm=document.getElementById('dm1').value;
+  const pr=document.getElementById('pr1').value;
+  buildStats(DB.malm,document.getElementById('s1'));
+  let f=DB.malm.filter(r=>{
+    if(st&&r.ס!==st)return false;
+    if(dm&&r.ד!==dm)return false;
+    if(pr&&String(r.ע)!==pr)return false;
+    if(q&&!(r.מ+r.ד+r.א+(r.dhl||'')+r.ה).toLowerCase().includes(q))return false;
+    return true;
+  });
+  document.getElementById('c1').textContent=`מציג ${f.length} מתוך ${DB.malm.length}`;
+  document.getElementById('b1').innerHTML=f.length
+    ?f.map(r=>{const idx=DB.malm.indexOf(r);return`<tr>
+      <td><button class="act-btn" onclick="openEdit('malm',${idx})" title="עריכה">✏️</button></td>
+      <td style="color:#888;font-size:11px">${r.ת||''}</td>
+      <td>${r.ד?`<div class="dtag">${r.ד}</div><br>`:''} ${r.מ||''}</td>
+      <td>${pc(r.ע)}</td><td>${sc(r.ס)}</td><td>${m(r.dhl)}</td><td>${m(r.א)}</td>
+      <td style="color:#555;font-size:11px">${m(r.ה)}</td></tr>`}).join('')
+    :'<tr><td colspan="8" class="nores">לא נמצאו תוצאות</td></tr>';
+}
+
+function r2(){
+  const q=document.getElementById('q2').value.toLowerCase();
+  const st=document.getElementById('st2').value;
+  const ns=document.getElementById('ns2').value;
+  buildStats(DB.rivka,document.getElementById('s2'));
+  let f=DB.rivka.filter(r=>{
+    if(st&&r.ס!==st)return false;
+    if(ns&&r.נ!==ns)return false;
+    if(q&&!(r.נ+r.מב+r.כ+r.ב+r.מט+r.ה).toLowerCase().includes(q))return false;
+    return true;
+  });
+  document.getElementById('c2').textContent=`מציג ${f.length} מתוך ${DB.rivka.length}`;
+  document.getElementById('b2').innerHTML=f.length
+    ?f.map(r=>{const idx=DB.rivka.indexOf(r);return`<tr>
+      <td><button class="act-btn" onclick="openEdit('rivka',${idx})" title="עריכה">✏️</button></td>
+      <td>${m(r.נ)}</td><td>${m(r.מב)}</td>
+      <td style="color:#888;font-size:11px">${r.ת||''}</td>
+      <td>${r.כ?`<strong>${r.כ}</strong><br>`:''} ${r.ב||''}</td>
+      <td>${m(r.מט)}</td><td>${pc(r.ע)}</td><td>${sc(r.ס)}</td>
+      <td style="color:#555;font-size:11px">${m(r.ה)}</td></tr>`}).join('')
+    :'<tr><td colspan="9" class="nores">לא נמצאו תוצאות</td></tr>';
+}
+
+function malmFields(r={}){
+  return`
+    <div class="form-row"><label>תאריך</label><input id="f_ת" type="date" value="${r.ת||new Date().toISOString().slice(0,10)}"></div>
+    <div class="form-row"><label>תחום</label><input id="f_ד" value="${(r.ד||'').replace(/"/g,'&quot;')}" placeholder="תחום..."></div>
+    <div class="form-row"><label>משימה</label><textarea id="f_מ">${r.מ||''}</textarea></div>
+    <div class="form-row"><label>עדיפות</label><select id="f_ע"><option value="">—</option>${[1,2,3,4,5].map(n=>`<option ${r.ע==n?'selected':''}>${n}</option>`).join('')}</select></div>
+    <div class="form-row"><label>סטטוס</label><select id="f_ס">${SM.map(s=>`<option ${r.ס===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="form-row"><label>DHL</label><input id="f_dhl" value="${(r.dhl||'').replace(/"/g,'&quot;')}" placeholder="שם..."></div>
+    <div class="form-row"><label>אחראי מלמ</label><input id="f_א" value="${(r.א||'').replace(/"/g,'&quot;')}" placeholder="שם..."></div>
+    <div class="form-row"><label>הערות</label><textarea id="f_ה">${r.ה||''}</textarea></div>`;
+}
+
+function rivkaFields(r={}){
+  return`
+    <div class="form-row"><label>נושא</label><input id="f_נ" value="${(r.נ||'').replace(/"/g,'&quot;')}" placeholder="נושא..."></div>
+    <div class="form-row"><label>מבקש</label><input id="f_מב" value="${(r.מב||'').replace(/"/g,'&quot;')}" placeholder="שם מבקש..."></div>
+    <div class="form-row"><label>תאריך</label><input id="f_ת" type="date" value="${r.ת||new Date().toISOString().slice(0,10)}"></div>
+    <div class="form-row"><label>כותרת</label><input id="f_כ" value="${(r.כ||'').replace(/"/g,'&quot;')}" placeholder="כותרת..."></div>
+    <div class="form-row"><label>בקשה</label><textarea id="f_ב">${r.ב||''}</textarea></div>
+    <div class="form-row"><label>מטפל</label><input id="f_מט" value="${(r.מט||'').replace(/"/g,'&quot;')}" placeholder="שם מטפל..."></div>
+    <div class="form-row"><label>עדיפות</label><select id="f_ע"><option value="">—</option>${[1,2,3,4,5].map(n=>`<option ${r.ע==n?'selected':''}>${n}</option>`).join('')}</select></div>
+    <div class="form-row"><label>סטטוס</label><select id="f_ס">${SR.map(s=>`<option ${r.ס===s?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="form-row"><label>הערות</label><textarea id="f_ה">${r.ה||''}</textarea></div>`;
+}
+
+function openAdd(){
+  editIdx=-1;editSheet=currentTab===0?'malm':'rivka';
+  document.getElementById('modalTitle').textContent=currentTab===0?'✏️ משימה חדשה — מלמ כולל':'✏️ משימה חדשה — רבקה';
+  document.getElementById('modalFields').innerHTML=currentTab===0?malmFields():rivkaFields();
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function openEdit(sheet,idx){
+  editIdx=idx;editSheet=sheet;
+  const r=DB[sheet][idx];
+  document.getElementById('modalTitle').textContent='✏️ עריכת משימה';
+  document.getElementById('modalFields').innerHTML=sheet==='malm'?malmFields(r):rivkaFields(r);
+  document.getElementById('modalBg').classList.add('open');
+}
+
+function closeModal(){document.getElementById('modalBg').classList.remove('open')}
+
+function g(id){const el=document.getElementById(id);return el?el.value.trim():''}
+
+function saveModal(){
+  let rec;
+  if(editSheet==='malm'){
+    rec={ת:g('f_ת'),ד:g('f_ד'),מ:g('f_מ'),ע:g('f_ע'),ס:g('f_ס')||'פתוח',dhl:g('f_dhl'),א:g('f_א'),ה:g('f_ה')};
+  }else{
+    rec={נ:g('f_נ'),מב:g('f_מב'),ת:g('f_ת'),כ:g('f_כ'),ב:g('f_ב'),מט:g('f_מט'),ע:g('f_ע'),ס:g('f_ס')||'פתוח',ה:g('f_ה')};
+  }
+  if(editIdx===-1){DB[editSheet].unshift(rec);}
+  else{DB[editSheet][editIdx]=rec;}
+  closeModal();
+  initFilters();
+  if(editSheet==='malm')r1();else r2();
+  saveDB();
+}
+
+loadDB();
+</script>
+</body>
+</html>
