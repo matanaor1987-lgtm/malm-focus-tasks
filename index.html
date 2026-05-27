@@ -137,15 +137,19 @@ const SM=['פתוח','בבדיקה','ממתין לבדיקה','מוקפא','הו
 const SR=['פתוח','בוצע'];
 
 async function loadDB(){
-  // Load data via raw URL (no CORS issues)
-  const raw=await fetch(`https://raw.githubusercontent.com/${OWNER}/${REPO}/main/db.json?t=${Date.now()}`);
-  DB=await raw.json();
-  // Get SHA separately for saves
-  const meta=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/db.json`,
-    {headers:{Authorization:`token ${TOKEN}`,Accept:'application/vnd.github.v3+json'}});
-  const j=await meta.json();
-  dbSha=j.sha;
-  initFilters();r1();r2();
+  try{
+    const rawUrl='https://raw.githubusercontent.com/matanaor1987-lgtm/malm-focus-tasks/main/db.json?t='+Date.now();
+    const raw=await fetch(rawUrl);
+    if(!raw.ok)throw new Error('raw fetch failed: '+raw.status);
+    DB=await raw.json();
+    const apiUrl='https://api.github.com/repos/matanaor1987-lgtm/malm-focus-tasks/contents/db.json';
+    const meta=await fetch(apiUrl,{headers:{Authorization:'token '+TOKEN,Accept:'application/vnd.github.v3+json'}});
+    const jj=await meta.json();
+    dbSha=jj.sha;
+    initFilters();r1();r2();
+  }catch(e){
+    document.getElementById('b1').innerHTML='<tr><td colspan="8" style="color:red;padding:20px">שגיאה בטעינה: '+e.message+'</td></tr>';
+  }
 }
 
 async function saveDB(){
