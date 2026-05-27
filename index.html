@@ -67,8 +67,7 @@ tr:hover td{background:#fffbf0}
 .chat-last{color:#555}
 .chat-last span.ml{color:#1565c0;font-weight:600}
 .chat-last span.dh{color:#e65100;font-weight:600}
-.chat-tooltip{display:none;position:fixed;z-index:9999;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);padding:14px;width:320px;max-height:400px;overflow-y:auto;font-size:12px}
-.chat-preview:hover .chat-tooltip{display:block}
+.chat-tooltip{display:none;position:fixed;z-index:9999;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);padding:14px;width:320px;max-height:360px;overflow-y:auto;font-size:12px}
 .tt-msg{padding:6px 10px;border-radius:8px;margin-bottom:6px;line-height:1.5}
 .tt-msg.malm{background:#e3f2fd;text-align:right}
 .tt-msg.dhl{background:#fff3e0;text-align:left}
@@ -379,16 +378,35 @@ function saveModal(){
 }
 
 
-// Fix tooltip position on mouse move
+// Smart tooltip positioning - always stay in viewport
 document.addEventListener('mouseover',function(e){
   const preview=e.target.closest('.chat-preview');
   if(!preview)return;
   const tt=preview.querySelector('.chat-tooltip');
   if(!tt)return;
+  tt.style.display='block';
   const rect=preview.getBoundingClientRect();
-  tt.style.top=(rect.bottom+5)+'px';
-  tt.style.right=(window.innerWidth-rect.right)+'px';
-  tt.style.left='auto';
+  const ttW=320, ttH=Math.min(tt.scrollHeight,360);
+  const vw=window.innerWidth, vh=window.innerHeight;
+  // Horizontal: prefer right-aligned, flip if needed
+  let left=rect.right-ttW;
+  if(left<8)left=8;
+  if(left+ttW>vw-8)left=vw-ttW-8;
+  // Vertical: prefer below, flip above if not enough room
+  let top=rect.bottom+5;
+  if(top+ttH>vh-8)top=rect.top-ttH-5;
+  if(top<8)top=8;
+  tt.style.left=left+'px';
+  tt.style.top=top+'px';
+  tt.style.right='auto';
+});
+document.addEventListener('mouseout',function(e){
+  const preview=e.target.closest('.chat-preview');
+  if(!preview)return;
+  const to=e.relatedTarget;
+  if(to&&preview.contains(to))return;
+  const tt=preview.querySelector('.chat-tooltip');
+  if(tt)tt.style.display='none';
 });
 loadDB();
 
