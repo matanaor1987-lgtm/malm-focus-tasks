@@ -495,6 +495,13 @@ function checkPwd(){
     document.getElementById('pwdInput').value='';
   }
 }
+// Attach events after DOM ready
+window.addEventListener('DOMContentLoaded',function(){
+  const btn=document.getElementById('pwdBtn');
+  const inp=document.getElementById('pwdInput');
+  if(btn)btn.addEventListener('click',checkPwd);
+  if(inp)inp.addEventListener('keydown',function(e){if(e.key==='Enter')checkPwd();});
+});
 // Auth check runs after DOM - handled in initAuth()
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&document.activeElement.id==='pwdInput')checkPwd();
