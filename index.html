@@ -260,6 +260,10 @@ async function loadDB(){
     const jj=await meta.json();
     dbSha=jj.sha;
     initFilters();r1();r2();
+    // Update requests badge
+    const pending=(DB.requests||[]).filter(r=>r.status==='ממתין לאישור').length;
+    const badge=document.getElementById('reqBadge');
+    if(badge)badge.textContent=pending||'';
   }catch(e){
     document.getElementById('b1').innerHTML='<tr><td colspan="8" style="color:red;padding:20px">שגיאה בטעינה: '+e.message+'</td></tr>';
   }
@@ -296,7 +300,10 @@ function switchTab(i){
   document.getElementById('btnAdd').style.display=i===2?'none':'block';
   if(i===0)document.getElementById('btnAdd').textContent='+ משימה חדשה (מלמ)';
   else if(i===1)document.getElementById('btnAdd').textContent='+ משימה חדשה (רבקה)';
-  if(i===2)renderRequests();
+  if(i===2){
+    if(DB.requests&&DB.requests.length){renderRequests();}
+    else{loadDB().then(()=>renderRequests());}
+  }
 }
 
 function sc(s){const k=(s||'פתוח').replace(/ /g,'-');return`<span class="badge s-${k}">${s||'פתוח'}</span>`}
