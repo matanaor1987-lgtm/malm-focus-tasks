@@ -215,15 +215,25 @@ async function loadDB(){
 async function saveDB(){
   const el=document.getElementById('savingMsg');
   el.style.display='block';
-  const content=btoa(unescape(encodeURIComponent(JSON.stringify(DB,null,2))));
-  const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/db.json`,{
-    method:'PUT',
-    headers:{Authorization:`token ${TOKEN}`,'Content-Type':'application/json',Accept:'application/vnd.github.v3+json'},
-    body:JSON.stringify({message:'Update tasks',content,sha:dbSha})
-  });
-  const j=await r.json();
-  dbSha=j.content.sha;
-  el.style.display='none';
+  el.style.background='#1a1a2e';
+  el.textContent='⏳ שומר...';
+  try{
+    const content=btoa(unescape(encodeURIComponent(JSON.stringify(DB,null,2))));
+    const r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/db.json`,{
+      method:'PUT',
+      headers:{Authorization:`token ${TOKEN}`,'Content-Type':'application/json',Accept:'application/vnd.github.v3+json'},
+      body:JSON.stringify({message:'Update tasks',content,sha:dbSha})
+    });
+    if(!r.ok){const err=await r.json();throw new Error(err.message||r.status);}
+    const j=await r.json();
+    dbSha=j.content.sha;
+    el.textContent='✓ נשמר!';
+    setTimeout(()=>{el.style.display='none';},1500);
+  }catch(e){
+    el.textContent='❌ שגיאה: '+e.message;
+    el.style.background='#c62828';
+    setTimeout(()=>{el.style.display='none';el.style.background='#1a1a2e';},3000);
+  }
 }
 
 function switchTab(i){
