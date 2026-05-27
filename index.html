@@ -108,6 +108,38 @@ tr:hover td{background:#fffbf0}
 .btn-send{background:#D40511;color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial;white-space:nowrap}
 .btn-send:hover{background:#b0040e}
 .no-msgs{color:#bbb;font-size:12px;text-align:center;padding:20px}
+
+/* Password */
+.pwd-screen{position:fixed;inset:0;background:#1a1a2e;z-index:9999;display:flex;align-items:center;justify-content:center}
+.pwd-box{background:#fff;border-radius:12px;padding:32px;width:320px;text-align:center}
+.pwd-box .dhl-logo{font-size:22px;font-weight:700;color:#D40511;margin-bottom:4px}
+.pwd-box h3{font-size:16px;color:#1a1a2e;margin-bottom:20px}
+.pwd-box input{width:100%;padding:10px;border:1.5px solid #ddd;border-radius:7px;font-size:14px;text-align:center;direction:ltr;margin-bottom:10px}
+.pwd-box input:focus{border-color:#D40511;outline:none}
+.pwd-box button{width:100%;background:#D40511;color:#fff;border:none;border-radius:7px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:Arial}
+.pwd-error{color:#D40511;font-size:12px;margin-top:8px;display:none}
+/* Requests tab */
+.req-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.req-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.req-card-title{font-size:14px;font-weight:700;color:#1a1a2e}
+.req-card-meta{font-size:11px;color:#888;margin-top:2px}
+.req-card-desc{font-size:12px;color:#555;line-height:1.6;margin-bottom:12px}
+.req-actions{display:flex;gap:8px}
+.btn-approve{background:#2e7d32;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial}
+.btn-reject{background:#D40511;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial}
+.btn-chat-mgr{background:#1565c0;color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial}
+.req-status{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
+.rs-wait{background:#fff3e0;color:#e65100}
+.rs-approved{background:#e8f5e9;color:#2e7d32}
+.rs-rejected{background:#fde8e8;color:#c62828}
+.rs-inprogress{background:#e3f2fd;color:#1565c0}
+/* Req chat */
+.req-chat{margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px;display:none}
+.req-chat.open{display:block}
+.req-chat-msgs{max-height:200px;overflow-y:auto;border:1px solid #e8e8e8;border-radius:8px;padding:8px;background:#f9f9f9;margin-bottom:8px;display:flex;flex-direction:column;gap:6px}
+.req-chat-input{display:flex;gap:6px}
+.req-chat-input textarea{flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Arial;direction:rtl;resize:none;height:52px}
+.btn-send-req{background:#1565c0;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial}
 </style>
 </head>
 <body>
@@ -121,6 +153,7 @@ tr:hover td{background:#fffbf0}
 <div class="tabs">
   <div class="tab active" onclick="switchTab(0)">משימות מלמ כולל</div>
   <div class="tab" onclick="switchTab(1)">משימות לרבקה</div>
+  <div class="tab" onclick="switchTab(2)" id="tab2">📥 בקשות ממתינות <span id="reqBadge" style="background:#D40511;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-right:4px"></span></div>
 </div>
 
 <div class="pane active" id="pane0">
@@ -218,6 +251,10 @@ async function loadDB(){
     const raw=await fetch(rawUrl);
     if(!raw.ok)throw new Error('raw fetch failed: '+raw.status);
     DB=await raw.json();
+    if(!DB.requests)DB.requests=[];
+    const pending=(DB.requests||[]).filter(r=>r.status==='ממתין לאישור').length;
+    const badge=document.getElementById('reqBadge');
+    if(badge)badge.textContent=pending||'';
     const apiUrl='https://api.github.com/repos/matanaor1987-lgtm/malm-focus-tasks/contents/db.json';
     const meta=await fetch(apiUrl,{headers:{Authorization:'token '+TOKEN,Accept:'application/vnd.github.v3+json'}});
     const jj=await meta.json();
@@ -256,7 +293,10 @@ function switchTab(i){
   currentTab=i;
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
   document.querySelectorAll('.pane').forEach((p,j)=>p.classList.toggle('active',i===j));
-  document.getElementById('btnAdd').textContent=i===0?'+ משימה חדשה (מלמ)':'+ משימה חדשה (רבקה)';
+  document.getElementById('btnAdd').style.display=i===2?'none':'block';
+  if(i===0)document.getElementById('btnAdd').textContent='+ משימה חדשה (מלמ)';
+  else if(i===1)document.getElementById('btnAdd').textContent='+ משימה חדשה (רבקה)';
+  if(i===2)renderRequests();
 }
 
 function sc(s){const k=(s||'פתוח').replace(/ /g,'-');return`<span class="badge s-${k}">${s||'פתוח'}</span>`}
@@ -428,6 +468,145 @@ document.addEventListener('mouseout',function(e){
   const tt=preview.querySelector('.chat-tooltip');
   if(tt)tt.style.display='none';
 });
+
+// Password
+function checkPwd(){
+  const v=document.getElementById('pwdInput').value;
+  if(v==='DHL123'){
+    document.getElementById('pwdScreen').style.display='none';
+    sessionStorage.setItem('auth','1');
+  }else{
+    document.getElementById('pwdError').style.display='block';
+    document.getElementById('pwdInput').value='';
+  }
+}
+if(sessionStorage.getItem('auth')==='1'){
+  document.getElementById('pwdScreen').style.display='none';
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.activeElement.id==='pwdInput')checkPwd();
+});
+
+// Requests
+function rsClass(s){
+  const m={'ממתין לאישור':'wait','אושר':'approved','נדחה':'rejected','בביצוע':'inprogress'};
+  return 'rs-'+(m[s]||'wait');
+}
+
+function renderRequests(){
+  if(!DB.requests||!DB.requests.length){
+    document.getElementById('reqList').innerHTML='<div style="text-align:center;padding:40px;color:#aaa">אין בקשות עדיין</div>';
+    document.getElementById('reqCount').textContent='0 בקשות';
+    document.getElementById('reqBadge').textContent='';
+    return;
+  }
+  const filter=document.getElementById('reqFilter').value;
+  const pending=DB.requests.filter(r=>r.status==='ממתין לאישור').length;
+  document.getElementById('reqBadge').textContent=pending||'';
+  let reqs=filter?DB.requests.filter(r=>r.status===filter):[...DB.requests].reverse();
+  document.getElementById('reqCount').textContent=reqs.length+' בקשות';
+  document.getElementById('reqList').innerHTML=reqs.map((r,i)=>{
+    const msgs=(r.chat&&r.chat.manager)||[];
+    const lastMsg=msgs.length?msgs[msgs.length-1]:null;
+    return`<div class="req-card" id="rc-${r.id}">
+      <div class="req-card-header">
+        <div>
+          <div class="req-card-title">${r.title}</div>
+          <div class="req-card-meta">${r.name} · ${r.dept} · ${r.date} · עדיפות ${r.pri}</div>
+        </div>
+        <span class="req-status ${rsClass(r.status)}">${r.status}</span>
+      </div>
+      <div class="req-card-desc">${r.desc}</div>
+      <div class="req-actions">
+        ${r.status==='ממתין לאישור'?`
+          <button class="btn-approve" onclick="approveReq('${r.id}')">✅ אשר</button>
+          <button class="btn-reject" onclick="rejectReq('${r.id}')">❌ דחה</button>`:''}
+        <button class="btn-chat-mgr" onclick="toggleReqChat('${r.id}')">💬 ${lastMsg?'המשך שיחה ('+msgs.length+')':'שלח הודעה'}</button>
+        <a href="track.html?id=${r.id}" target="_blank" style="font-size:11px;color:#888;text-decoration:none;padding:7px 4px">🔗 קישור למנהל</a>
+      </div>
+      <div class="req-chat" id="chat-${r.id}">
+        <div class="req-chat-msgs" id="chatmsgs-${r.id}"></div>
+        <div class="req-chat-input">
+          <textarea id="chatinput-${r.id}" placeholder="כתוב הודעה למנהל..."></textarea>
+          <button class="btn-send-req" onclick="sendReqMsg('${r.id}')">שלח</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // Render chat msgs for open chats
+  reqs.forEach(r=>{
+    const msgs=(r.chat&&r.chat.manager)||[];
+    const el=document.getElementById('chatmsgs-'+r.id);
+    if(!el)return;
+    if(!msgs.length){el.innerHTML='<div style="color:#bbb;font-size:11px;text-align:center;padding:8px">אין הודעות</div>';return;}
+    el.innerHTML=msgs.map(m=>`
+      <div class="msg msg-${m.side==='manager'?'malm':'manager'}" style="max-width:80%;padding:6px 10px;border-radius:8px;font-size:11px;background:${m.side==='manager'?'#fff3e0':'#e3f2fd'};align-self:${m.side==='manager'?'flex-start':'flex-end'}">
+        <div style="font-size:10px;font-weight:700;color:${m.side==='manager'?'#e65100':'#1565c0'};margin-bottom:2px">${m.sender}</div>
+        <div>${m.text}</div>
+        <div style="font-size:9px;color:#999;margin-top:2px">${m.time}</div>
+      </div>`).join('');
+    el.scrollTop=el.scrollHeight;
+  });
+}
+
+function toggleReqChat(id){
+  const el=document.getElementById('chat-'+id);
+  el.classList.toggle('open');
+}
+
+async function approveReq(id){
+  if(!confirm('לאשר את הבקשה ולהעביר לרבקה?'))return;
+  const req=DB.requests.find(r=>r.id===id);
+  if(!req)return;
+  req.status='אושר';
+  // Add to rivka tab
+  if(!DB.rivka)DB.rivka=[];
+  const now=new Date();
+  const date=now.toLocaleDateString('he-IL');
+  DB.rivka.unshift({
+    נ:req.dept, מב:req.name, ת:date, כ:req.title,
+    ב:req.desc, מט:'', ע:req.pri, ס:'פתוח', ה:'',
+    chat:{malm:[],dhl:[],manager:req.chat&&req.chat.manager||[]},
+    reqId:id
+  });
+  // Notify manager via chat
+  if(!req.chat)req.chat={malm:[],dhl:[],manager:[]};
+  const time=now.toLocaleDateString('he-IL')+' '+now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+  req.chat.manager.push({sender:'צוות DHL',side:'malm',text:'✅ הבקשה שלך אושרה והועברה לצוות הפיתוח. נעדכן אותך בהתקדמות.',time});
+  await saveDB();
+  initFilters();r1();r2();renderRequests();
+}
+
+async function rejectReq(id){
+  const reason=prompt('סיבת הדחייה (תועבר למנהל):');
+  if(reason===null)return;
+  const req=DB.requests.find(r=>r.id===id);
+  if(!req)return;
+  req.status='נדחה';
+  if(!req.chat)req.chat={malm:[],dhl:[],manager:[]};
+  const now=new Date();
+  const time=now.toLocaleDateString('he-IL')+' '+now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+  req.chat.manager.push({sender:'צוות DHL',side:'malm',text:'❌ הבקשה נדחתה. '+(reason||''),time});
+  await saveDB();
+  renderRequests();
+}
+
+async function sendReqMsg(id){
+  const input=document.getElementById('chatinput-'+id);
+  const text=input.value.trim();
+  if(!text)return;
+  const req=DB.requests.find(r=>r.id===id);
+  if(!req)return;
+  if(!req.chat)req.chat={malm:[],dhl:[],manager:[]};
+  const now=new Date();
+  const time=now.toLocaleDateString('he-IL')+' '+now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'});
+  req.chat.manager.push({sender:'צוות DHL',side:'malm',text,time});
+  input.value='';
+  await saveDB();
+  renderRequests();
+  document.getElementById('chat-'+id).classList.add('open');
+}
+
 loadDB();
 
 
@@ -583,5 +762,31 @@ document.addEventListener('keydown',e=>{
   }
 });
 </script>
+
+<!-- Password Screen -->
+<div class="pwd-screen" id="pwdScreen">
+  <div class="pwd-box">
+    <div class="dhl-logo">DHL Express</div>
+    <h3>כניסה למערכת ניהול</h3>
+    <input type="password" id="pwdInput" placeholder="הזן סיסמה..." onkeydown="if(event.key==='Enter')checkPwd()">
+    <button onclick="checkPwd()">כניסה →</button>
+    <div class="pwd-error" id="pwdError">סיסמה שגויה</div>
+  </div>
+</div>
+
+<!-- Requests Pane -->
+<div class="pane" id="pane2" style="padding:14px 20px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="font-size:13px;color:#888" id="reqCount"></div>
+    <select id="reqFilter" onchange="renderRequests()" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:12px;font-family:Arial">
+      <option value="">כל הסטטוסים</option>
+      <option value="ממתין לאישור">ממתין לאישור</option>
+      <option value="אושר">אושר</option>
+      <option value="נדחה">נדחה</option>
+      <option value="בביצוע">בביצוע</option>
+    </select>
+  </div>
+  <div id="reqList"></div>
+</div>
 </body>
 </html>
