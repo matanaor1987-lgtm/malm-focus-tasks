@@ -245,7 +245,15 @@ let DB={malm:[],rivka:[]},dbSha='',currentTab=0,editIdx=-1,editSheet='';
 const SM=['פתוח','בבדיקה','ממתין לבדיקה','מוקפא','הושהה','בוצע','טופל','בוטל'];
 const SR=['פתוח','בוצע'];
 
+function initAuth(){
+  if(sessionStorage.getItem('auth')==='1'){
+    const s=document.getElementById('pwdScreen');
+    if(s)s.style.display='none';
+  }
+}
+
 async function loadDB(){
+  initAuth();
   try{
     const rawUrl='https://raw.githubusercontent.com/matanaor1987-lgtm/malm-focus-tasks/main/db.json?t='+Date.now();
     const raw=await fetch(rawUrl);
@@ -487,9 +495,7 @@ function checkPwd(){
     document.getElementById('pwdInput').value='';
   }
 }
-if(sessionStorage.getItem('auth')==='1'){
-  document.getElementById('pwdScreen').style.display='none';
-}
+// Auth check runs after DOM - handled in initAuth()
 document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&document.activeElement.id==='pwdInput')checkPwd();
 });
