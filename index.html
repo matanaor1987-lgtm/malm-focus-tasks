@@ -61,6 +61,23 @@ tr:hover td{background:#fffbf0}
 .dtag{font-size:10px;background:#e3f2fd;color:#1565c0;padding:1px 6px;border-radius:3px;display:inline-block;margin-bottom:2px}
 .loading{text-align:center;padding:40px;color:#999;font-size:14px}
 
+
+/* Chat tooltip */
+.chat-preview{position:relative;cursor:pointer;font-size:11px;line-height:1.6}
+.chat-last{color:#555}
+.chat-last span.ml{color:#1565c0;font-weight:600}
+.chat-last span.dh{color:#e65100;font-weight:600}
+.chat-tooltip{display:none;position:fixed;z-index:9999;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);padding:14px;width:320px;max-height:400px;overflow-y:auto;font-size:12px}
+.chat-preview:hover .chat-tooltip{display:block}
+.tt-msg{padding:6px 10px;border-radius:8px;margin-bottom:6px;line-height:1.5}
+.tt-msg.malm{background:#e3f2fd;text-align:right}
+.tt-msg.dhl{background:#fff3e0;text-align:left}
+.tt-sender{font-size:10px;font-weight:700;margin-bottom:2px}
+.tt-sender.malm{color:#1565c0}
+.tt-sender.dhl{color:#e65100}
+.tt-time{font-size:9px;color:#999;margin-top:2px}
+.tt-divider{font-size:10px;color:#aaa;text-align:center;margin:8px 0;border-top:1px solid #f0f0f0;padding-top:6px}
+.no-chat{color:#ccc;font-size:11px}
 /* Chat */
 .chat-section{margin-top:20px;border-top:2px solid #FECC02;padding-top:16px}
 .chat-tabs{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid #e0e0e0}
@@ -113,7 +130,7 @@ tr:hover td{background:#fffbf0}
     <table><thead><tr>
       <th style="width:30px"></th><th style="width:88px">תאריך</th><th>תחום / משימה</th>
       <th style="width:36px">עד'</th><th style="width:90px">סטטוס</th>
-      <th style="width:70px">DHL</th><th style="width:70px">אחראי</th><th>הערות</th>
+      <th style="width:70px">DHL</th><th style="width:70px">אחראי</th><th>הערות מלמ / DHL</th>
     </tr></thead><tbody id="b1"><tr><td colspan="8" class="loading">טוען נתונים...</td></tr></tbody></table>
   </div>
 </div>
@@ -262,7 +279,7 @@ function r1(){
       <td style="color:#888;font-size:11px">${r.ת||''}</td>
       <td>${r.ד?`<div class="dtag">${r.ד}</div><br>`:''} ${r.מ||''}</td>
       <td>${pc(r.ע)}</td><td>${sc(r.ס)}</td><td>${m(r.dhl)}</td><td>${m(r.א)}</td>
-      <td style="color:#555;font-size:11px">${m(r.ה)}</td></tr>`}).join('')
+      <td>${chatPreviewHtml(r)}</td></tr>`}).join('')
     :'<tr><td colspan="8" class="nores">לא נמצאו תוצאות</td></tr>';
 }
 
@@ -285,7 +302,7 @@ function r2(){
       <td style="color:#888;font-size:11px">${r.ת||''}</td>
       <td>${r.כ?`<strong>${r.כ}</strong><br>`:''} ${r.ב||''}</td>
       <td>${m(r.מט)}</td><td>${pc(r.ע)}</td><td>${sc(r.ס)}</td>
-      <td style="color:#555;font-size:11px">${m(r.ה)}</td></tr>`}).join('')
+      <td>${chatPreviewHtml(r)}</td></tr>`}).join('')
     :'<tr><td colspan="9" class="nores">לא נמצאו תוצאות</td></tr>';
 }
 
@@ -353,7 +370,54 @@ function saveModal(){
   saveDB();
 }
 
+
+// Fix tooltip position on mouse move
+document.addEventListener('mouseover',function(e){
+  const preview=e.target.closest('.chat-preview');
+  if(!preview)return;
+  const tt=preview.querySelector('.chat-tooltip');
+  if(!tt)return;
+  const rect=preview.getBoundingClientRect();
+  tt.style.top=(rect.bottom+5)+'px';
+  tt.style.right=(window.innerWidth-rect.right)+'px';
+  tt.style.left='auto';
+});
 loadDB();
+
+
+function chatPreviewHtml(r){
+  const chat=r.chat||{};
+  const malm=chat.malm||[];
+  const dhl=chat.dhl||[];
+  if(!malm.length&&!dhl.length) return '<span class="no-chat">—</span>';
+  
+  // Last message from each
+  const lastM=malm[malm.length-1];
+  const lastD=dhl[dhl.length-1];
+  
+  // Full thread for tooltip
+  const all=[
+    ...malm.map(m=>({...m,side:'malm'})),
+    ...dhl.map(m=>({...m,side:'dhl'}))
+  ].sort((a,b)=>a.time.localeCompare(b.time));
+  
+  const tooltip=all.map(m=>`
+    <div class="tt-msg ${m.side}">
+      <div class="tt-sender ${m.side}">${m.sender}</div>
+      <div>${m.text}</div>
+      <div class="tt-time">${m.time}</div>
+    </div>`).join('');
+  
+  const preview=[
+    lastM?`<div><span class="ml">מלמ</span> <span style="color:#888">${lastM.time.split(' ')[0]}</span>: ${lastM.text.slice(0,40)}${lastM.text.length>40?'...':''}</div>`:'',
+    lastD?`<div><span class="dh">DHL</span> <span style="color:#888">${lastD.time.split(' ')[0]}</span>: ${lastD.text.slice(0,40)}${lastD.text.length>40?'...':''}</div>`:''
+  ].filter(Boolean).join('');
+  
+  return `<div class="chat-preview">
+    <div class="chat-last">${preview}</div>
+    <div class="chat-tooltip">${tooltip||'<span class="no-chat">אין הערות</span>'}</div>
+  </div>`;
+}
 
 // Chat
 let chatTab='malm';
