@@ -102,7 +102,11 @@ tr:hover td{background:#fffbf0}
   <div class="filters">
     <input type="text" id="q2" placeholder="חיפוש חופשי..." oninput="r2()">
     <select id="st2" onchange="r2()"><option value="">כל הסטטוסים</option></select>
-    <select id="ns2" onchange="r2()"><option value="">כל הנושאים</option></select>
+    <select id="pr2" onchange="r2()">
+      <option value="">כל העדיפויות</option>
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+      <option value="4">4</option><option value="5">5</option>
+    </select>
   </div>
   <div class="count" id="c2"></div>
   <div class="tbl-wrap">
@@ -197,7 +201,6 @@ function initFilters(){
   populateSel('st1',DB.malm.map(r=>r.ס));
   populateSel('dm1',DB.malm.map(r=>r.ד));
   populateSel('st2',DB.rivka.map(r=>r.ס));
-  populateSel('ns2',DB.rivka.map(r=>r.נ));
 }
 
 function r1(){
@@ -227,11 +230,11 @@ function r1(){
 function r2(){
   const q=document.getElementById('q2').value.toLowerCase();
   const st=document.getElementById('st2').value;
-  const ns=document.getElementById('ns2').value;
+  const pr=document.getElementById('pr2').value;
   buildStats(DB.rivka,document.getElementById('s2'));
   let f=DB.rivka.filter(r=>{
     if(st&&r.ס!==st)return false;
-    if(ns&&r.נ!==ns)return false;
+    if(pr&&String(r.ע)!==pr)return false;
     if(q&&!(r.נ+r.מב+r.כ+r.ב+r.מט+r.ה).toLowerCase().includes(q))return false;
     return true;
   });
