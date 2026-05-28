@@ -13257,5 +13257,14 @@
         "manager": []
       }
     }
-  ]
+  ],
+  "users": [
+    {
+      "name": "מנהל מערכת",
+      "username": "admin",
+      "password": "DHL123",
+      "role": "admin"
+    }
+  ],
+  "tickets": []
 }
