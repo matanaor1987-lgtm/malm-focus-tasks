@@ -13270,6 +13270,12 @@
       "username": "rivka",
       "password": "MALAM123",
       "role": "admin"
+    },
+    {
+      "name": "test",
+      "username": "mnaor",
+      "password": "DHL123",
+      "role": "manager"
     }
   ],
   "tickets": []
