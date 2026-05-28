@@ -13264,6 +13264,12 @@
       "username": "admin",
       "password": "DHL123",
       "role": "admin"
+    },
+    {
+      "name": "רבקה",
+      "username": "rivka",
+      "password": "MALAM123",
+      "role": "admin"
     }
   ],
   "tickets": []
