@@ -13398,11 +13398,46 @@
       "email": "matan.naor@dhl.com"
     },
     {
+      "name": "הידי תשתית",
+      "username": "htashtit",
+      "password": "DHL123",
+      "role": "manager",
+      "email": "hedie.tastit@dhl.com"
+    },
+    {
+      "name": "ארז סטפ",
+      "username": "estupp",
+      "password": "DHL123",
+      "role": "manager",
+      "email": "erez.stupp@dhl.com"
+    },
+    {
       "name": "שפי לוי",
       "username": "slevi",
       "password": "DHL123",
       "role": "manager",
       "email": "sheffi.levi@dhl.com"
+    },
+    {
+      "name": "טל סילוני",
+      "username": "tsiloni",
+      "password": "DHL123",
+      "role": "manager",
+      "email": "tal.siloni@dhl.com"
+    },
+    {
+      "name": "אלברט איסק",
+      "username": "aisaac",
+      "password": "DHL123",
+      "role": "manager",
+      "email": "albert.isaac@dhl.com"
+    },
+    {
+      "name": "ליאור הרפז",
+      "username": "lharpaz",
+      "password": "DHL123",
+      "role": "manager",
+      "email": "lior.harpaz@dhl.com"
     }
   ],
   "tickets": []
