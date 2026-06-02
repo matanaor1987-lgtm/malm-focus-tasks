@@ -13539,8 +13539,8 @@
       "role": "admin"
     },
     {
-      "name": "TETS",
-      "username": "TETS",
+      "name": "TEST",
+      "username": "TEST",
       "password": "DHL123",
       "role": "manager",
       "email": "matan.naor@dhl.com"
