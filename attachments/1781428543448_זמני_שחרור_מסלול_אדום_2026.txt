@@ -1,0 +1,50 @@
+SELECT
+    p.process_co,
+    OEM2ANSII(p.process_english_name) AS process_name_eng,
+    OEM2ANSII(p.process_local_name)   AS process_name_heb,
+    COUNT(*)                          AS qty_closed_steps,
+
+    ROUND(AVG(
+        (TO_DATE(p.finish_process_timenew, 'YYYYMMDDHH24MISS') -
+         TO_DATE(p.start_process_timenew,  'YYYYMMDDHH24MISS')) * 24
+    ), 2) AS avg_hours,
+
+    ROUND(MEDIAN(
+        (TO_DATE(p.finish_process_timenew, 'YYYYMMDDHH24MISS') -
+         TO_DATE(p.start_process_timenew,  'YYYYMMDDHH24MISS')) * 24
+    ), 2) AS median_hours,
+
+    ROUND(MIN(
+        (TO_DATE(p.finish_process_timenew, 'YYYYMMDDHH24MISS') -
+         TO_DATE(p.start_process_timenew,  'YYYYMMDDHH24MISS')) * 24
+    ), 2) AS min_hours,
+
+    ROUND(MAX(
+        (TO_DATE(p.finish_process_timenew, 'YYYYMMDDHH24MISS') -
+         TO_DATE(p.start_process_timenew,  'YYYYMMDDHH24MISS')) * 24
+    ), 2) AS max_hours
+
+FROM process_for_file p
+JOIN fil_head_courier c
+  ON c.file_no = p.file_no
+JOIN tab_users_tools u
+  ON u.user0 = c.user_attendant_name
+ AND NVL(u.inactive,0) = 0
+
+WHERE p.file_type = 15
+  AND p.belongs_to_station = 5
+  AND u.department = :p_department
+  AND p.process_co NOT IN (307)
+  AND p.start_process_timenew BETWEEN :p_date_from || '000000'
+                                  AND :p_date_to   || '235959'
+  AND NVL(TRIM(p.finish_process_timenew), '00000000000000') <> '00000000000000'
+  AND p.finish_process_timenew IS NOT NULL
+
+GROUP BY
+    p.process_co,
+    OEM2ANSII(p.process_english_name),
+    OEM2ANSII(p.process_local_name)
+
+ORDER BY
+    avg_hours DESC,
+    p.process_co;
